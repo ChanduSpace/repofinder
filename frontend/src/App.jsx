@@ -1,63 +1,80 @@
-import { useState, useEffect } from "react";
-import { Layout, Typography, message } from "antd";
+import { useState } from "react";
+import { fetchRepos } from "./api";
 import SearchForm from "./components/SearchForm";
-import RepoTable from "./components/RepoTable";
-import { searchRepos, getRepos } from "./api";
-
-const { Header, Content } = Layout;
-const { Title } = Typography;
+import RepoCard from "./components/RepoCard";
+import "./App.css";
 
 function App() {
   const [repos, setRepos] = useState([]);
-  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [keyword, setKeyword] = useState("");
   const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(5);
+  const [totalCount, setTotalCount] = useState(0);
+  const perPage = 9;
 
-  const fetchRepos = async (pageNo = 1, pageSize = perPage) => {
+  const handleSearch = async (newKeyword, newPage = 1) => {
+    if (!newKeyword.trim()) return;
+    setLoading(true);
     try {
-      const res = await getRepos(pageNo, pageSize);
-      setRepos(res.data.data);
-      setTotal(res.data.total);
-      setPage(res.data.page);
-      setPerPage(res.data.perPage);
-    } catch {
-      message.error("Failed to fetch repos");
+      const data = await fetchRepos(newKeyword, newPage, perPage);
+      setRepos(data.items);
+      setKeyword(newKeyword);
+      setPage(newPage);
+      setTotalCount(data.total_count);
+    } catch (error) {
+      console.error("Error fetching repos:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSearch = async (keyword) => {
-    try {
-      await searchRepos(keyword, 1, perPage);
-      fetchRepos(1, perPage);
-    } catch {
-      message.error("Search failed");
-    }
-  };
-
-  const handlePageChange = (newPage, newPageSize) => {
-    fetchRepos(newPage, newPageSize);
-  };
-
-  useEffect(() => {
-    fetchRepos();
-  }, []);
+  const totalPages = Math.ceil(totalCount / perPage);
 
   return (
-    <Layout style={{ minHeight: "100vh" }}>
-      <Header style={{ background: "#fff", padding: "10px" }}>
-        <Title level={3}>GitHub Repo Search</Title>
-      </Header>
-      <Content style={{ padding: "20px" }}>
+    <div>
+      {/* Navbar */}
+      <header className="navbar">
+        <h1> RepoFinder</h1>
+      </header>
+
+      {/* Search + Results */}
+      <main className="container">
         <SearchForm onSearch={handleSearch} />
-        <RepoTable
-          repos={repos}
-          total={total}
-          page={page}
-          perPage={perPage}
-          onPageChange={handlePageChange}
-        />
-      </Content>
-    </Layout>
+
+        {loading && <p className="loading">🔍 Searching GitHub...</p>}
+
+        <div className="repo-grid">
+          {repos.map((repo) => (
+            <RepoCard key={repo.id} repo={repo} />
+          ))}
+        </div>
+
+        {/* Pagination */}
+        {!loading && repos.length > 0 && (
+          <div className="pagination">
+            <button
+              disabled={page === 1}
+              onClick={() => handleSearch(keyword, page - 1)}
+            >
+              ← Prev
+            </button>
+            <span>
+              Page {page} of {totalPages}
+            </span>
+            <button
+              disabled={page === totalPages}
+              onClick={() => handleSearch(keyword, page + 1)}
+            >
+              Next →
+            </button>
+          </div>
+        )}
+
+        {!loading && repos.length === 0 && (
+          <p className="empty">✨ Start searching to discover GitHub repos!</p>
+        )}
+      </main>
+    </div>
   );
 }
 

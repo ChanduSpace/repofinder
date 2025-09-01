@@ -1,25 +1,25 @@
-import { Input, Button, Form } from "antd";
+import { useState } from "react";
+import "./SearchForm.css";
 
-const SearchForm = ({ onSearch }) => {
-  const onFinish = (values) => {
-    onSearch(values.keyword);
+function SearchForm({ onSearch }) {
+  const [input, setInput] = useState("");
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSearch(input, 1);
   };
 
   return (
-    <Form layout="inline" onFinish={onFinish}>
-      <Form.Item
-        name="keyword"
-        rules={[{ required: true, message: "Please enter a keyword" }]}
-      >
-        <Input placeholder="Enter keyword" />
-      </Form.Item>
-      <Form.Item>
-        <Button type="primary" htmlType="submit">
-          Search
-        </Button>
-      </Form.Item>
-    </Form>
+    <form className="search-form" onSubmit={handleSubmit}>
+      <input
+        type="text"
+        placeholder="Enter keyword... (e.g. react, express, flask)"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+      />
+      <button type="submit">Search</button>
+    </form>
   );
-};
+}
 
 export default SearchForm;

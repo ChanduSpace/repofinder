@@ -1,64 +1,38 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const axios = require("axios");
-const cors = require("cors");
-require("dotenv").config();
-
-const Repo = require("./models/Repo");
+import express from "express";
+import fetch from "node-fetch";
+import cors from "cors";
 
 const app = express();
+const PORT = process.env.PORT || 5000;
+
 app.use(cors());
-app.use(express.json());
 
-mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log("MongoDB Atlas Connected"))
-  .catch((err) => console.error("MongoDB connection error:", err));
+app.get("/api/repos", async (req, res) => {
+  const { q, page = 1, per_page = 9 } = req.query;
 
-app.post("/api/search", async (req, res) => {
+  if (!q) {
+    return res.status(400).json({ error: "Missing search query" });
+  }
+
   try {
-    const { keyword, page = 1, perPage = 10 } = req.body;
-
-    const response = await axios.get(
-      `https://api.github.com/search/repositories?q=${keyword}&per_page=${perPage}&page=${page}`
+    const response = await fetch(
+      `https://api.github.com/search/repositories?q=${q}&sort=stars&order=desc&page=${page}&per_page=${per_page}`
     );
 
-    const repos = response.data.items.map((r) => ({
-      name: r.full_name,
-      html_url: r.html_url,
-      description: r.description,
-      stars: r.stargazers_count,
-    }));
+    if (!response.ok) {
+      return res.status(500).json({ error: "Failed to fetch from GitHub" });
+    }
 
-    await Repo.insertMany(repos, { ordered: false }).catch(() => {});
-
-    res.json({ success: true, repos });
+    const data = await response.json();
+    res.json({
+      items: data.items,
+      total_count: data.total_count,
+    });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ error: "API Fetch Failed" });
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-app.get("/api/repos", async (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const perPage = parseInt(req.query.perPage) || 10;
-
-  const repos = await Repo.find()
-    .skip((page - 1) * perPage)
-    .limit(perPage);
-
-  const total = await Repo.countDocuments();
-
-  res.json({
-    data: repos,
-    total,
-    page,
-    perPage,
-  });
+app.listen(PORT, () => {
+  console.log(`✅ Server running at http://localhost:${PORT}`);
 });
-
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));

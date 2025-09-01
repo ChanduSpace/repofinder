@@ -1,0 +1,32 @@
+.repo-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.repo-card:hover {
+  transform: translateY(-4px);
+}
+
+.repo-card h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+}
+
+.repo-card a {
+  text-decoration: none;
+  color: #0366d6;
+}
+
+.repo-card p {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.repo-stats {
+  margin-top: 0.8rem;
+  font-size: 0.85rem;
+  color: #444;
+}

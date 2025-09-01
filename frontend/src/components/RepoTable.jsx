@@ -1,38 +1,21 @@
-import { Table } from "antd";
-
-const RepoTable = ({ repos, total, page, perPage, onPageChange }) => {
-  const columns = [
-    { title: "Name", dataIndex: "name", key: "name" },
-    {
-      title: "Link",
-      dataIndex: "html_url",
-      key: "html_url",
-      render: (url) => (
-        <a href={url} target="_blank" rel="noreferrer">
-          {url}
-        </a>
-      ),
-    },
-    { title: "Description", dataIndex: "description", key: "description" },
-    { title: "Stars", dataIndex: "stars", key: "stars" },
-  ];
+function RepoTable({ repos }) {
+  if (!repos || repos.length === 0) {
+    return <p>No repositories found.</p>;
+  }
 
   return (
-    <Table
-      dataSource={repos}
-      columns={columns}
-      rowKey="_id"
-      pagination={{
-        current: page,
-        pageSize: perPage,
-        total: total,
-        showSizeChanger: true,
-        onChange: (newPage, newPageSize) => {
-          onPageChange(newPage, newPageSize);
-        },
-      }}
-    />
+    <div className="repo-list">
+      {repos.map((repo) => (
+        <div key={repo.id} className="repo-item">
+          <h3>{repo.full_name}</h3>
+          <p>⭐ {repo.stargazers_count}</p>
+          <a href={repo.html_url} target="_blank" rel="noopener noreferrer">
+            View Repo
+          </a>
+        </div>
+      ))}
+    </div>
   );
-};
+}
 
 export default RepoTable;
